@@ -89,9 +89,8 @@
                                                     value="something">
                                             </div>
                                         </td>
-                                        <td hidden class="user_id
-                                        ">{{ $list->user_id }}</td>
-                                        <td>{{ $list->user_id }}</td>
+                                        <td hidden class="teacher_id">{{ $list->teacher_id }}</td>
+                                        <td>{{ $list->teacher_id }}</td>
                                         <td>
                                             <h2 class="table-avatar">
                                                 <a href="teacher-details.html" class="avatar avatar-sm me-2">
@@ -108,11 +107,11 @@
                                         <td>{{ $list->gender }}</td>
                                         <td>Mathematics</td>
                                         <td>A</td>
-                                        <td>{{ $list->mobile }}</td>
+                                        <td>{{ $list->phone_number }}</td>
                                         <td>{{ $list->address }}</td>
                                         <td class="text-end">
                                             <div class="actions">
-                                                <a href="{{ url('teacher/edit/'.$list->user_id) }}" class="btn btn-sm bg-danger-light">
+                                                <a href="{{ url('teacher/edit/'.$list->teacher_id) }}" class="btn btn-sm bg-danger-light">
                                                     <i class="far fa-edit me-2"></i>
                                                 </a>
                                                 <a class="btn btn-sm bg-danger-light teacher_delete" data-bs-toggle="modal" data-bs-target="#teacherDelete">
@@ -144,7 +143,7 @@
                     <form action="{{ route('teacher/delete') }}" method="POST">
                         @csrf
                         <div class="row">
-                            <input type="hidden" name="id" class="e_user_id" value="">
+                            <input type="hidden" name="id" class="e_teacher_id" value="">
                             <div class="col-6">
                                 <button type="submit" class="btn btn-primary continue-btn submit-btn" style="border-radius: 5px !important;">Delete</button>
                             </div>
@@ -165,7 +164,7 @@
         $(document).on('click','.teacher_delete',function()
         {
             var _this = $(this).parents('tr');
-            $('.e_user_id').val(_this.find('.user_id').text());
+            $('.e_teacher_id').val(_this.find('.teacher_id').text());
         });
     </script>
 @endsection

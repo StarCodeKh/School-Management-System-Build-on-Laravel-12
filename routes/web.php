@@ -13,14 +13,6 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-/** for side bar menu active */
-function set_active( $route ) {
-    if( is_array( $route ) ){
-        return in_array(Request::path(), $route) ? 'active' : '';
-    }
-    return Request::path() == $route ? 'active' : '';
-}
-
 Route::get('/', function () {
     return view('auth.login');
 });
@@ -99,7 +91,7 @@ Route::group(['namespace' => 'App\Http\Controllers'],function()
         Route::get('teacher/list/page', 'teacherList')->middleware('auth')->name('teacher/list/page'); // page teacher
         Route::get('teacher/grid/page', 'teacherGrid')->middleware('auth')->name('teacher/grid/page'); // page grid teacher
         Route::post('teacher/save', 'saveRecord')->middleware('auth')->name('teacher/save'); // save record
-        Route::get('teacher/edit/{user_id}', 'editRecord'); // view teacher record
+        Route::get('teacher/edit/{teacher_id}', 'editRecord'); // view teacher record
         Route::post('teacher/update', 'updateRecordTeacher')->middleware('auth')->name('teacher/update'); // update record
         Route::post('teacher/delete', 'teacherDelete')->name('teacher/delete'); // delete record teacher
     });

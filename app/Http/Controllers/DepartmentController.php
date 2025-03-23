@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use DB;
 use Illuminate\Http\Request;
 use App\Models\Department;
+use Log;
+use DB;
 
 class DepartmentController extends Controller
 {
@@ -101,77 +102,91 @@ class DepartmentController extends Controller
         return response()->json($response);
     }
 
-    /** save record */
+    /** Save Record */
     public function saveRecord(Request $request)
     {
+        // Validate input data
         $request->validate([
             'department_name'       => 'required|string',
             'head_of_department'    => 'required|string',
             'department_start_date' => 'required|string',
             'no_of_students'        => 'required|string',
         ]);
-
+    
+        DB::beginTransaction();
         try {
-
             $saveRecord = new Department;
             $saveRecord->department_name       = $request->department_name;
             $saveRecord->head_of_department    = $request->head_of_department;
             $saveRecord->department_start_date = $request->department_start_date;
             $saveRecord->no_of_students        = $request->no_of_students;
             $saveRecord->save();
-   
-            Toastr::success('Has been add successfully :)','Success');
-            return redirect()->back();
-        } catch(\Exception $e) {
-            \Log::info($e);
+    
+            DB::commit();
+            return redirect()->back()->with('success', 'Department has been added successfully!');
+        } catch (\Exception $e) {
             DB::rollback();
-            Toastr::error('fail, Add new record  :)','Error');
-            return redirect()->back();
+            Log::error('Failed to add new Department record', [
+                'error' => $e->getMessage(),
+                'request_data' => $request->all(),
+            ]);
+
+            return redirect()->back()->with('error', 'Failed to add new record. Please try again later.');
         }
     }
-
-    /** update record */
+    
+    /** Update Record */
     public function updateRecord(Request $request)
     {
         DB::beginTransaction();
         try {
-            
             $updateRecord = [
                 'department_name'       => $request->department_name,
                 'head_of_department'    => $request->head_of_department,
                 'department_start_date' => $request->department_start_date,
                 'no_of_students'        => $request->no_of_students,
             ];
-
-            Department::where('department_id',$request->department_id)->update($updateRecord);
-            // Toastr::success('Has been update successfully :)','Success');
+    
+            Department::where('department_id', $request->department_id)->update($updateRecord);
             DB::commit();
-            return redirect()->back();
-           
-        } catch(\Exception $e) {
-            \Log::info($e);
+            return redirect()->back()->with('success', 'Department record updated successfully!');
+        } catch (\Exception $e) {
             DB::rollback();
-            // Toastr::error('Fail, update record:)','Error');
-            return redirect()->back();
+            Log::error('Failed to update Department record', [
+                'error' => $e->getMessage(),
+                'request_data' => $request->all(),
+            ]);
+            return redirect()->back()->with('error', 'Failed to update the department record. Please try again later.');
         }
     }
-
-    /** department delete record */
-    public function deleteRecord(Request $request) 
+    
+    /** Delete Record */
+    public function deleteRecord(Request $request)
     {
         DB::beginTransaction();
         try {
+            $department = Department::find($request->department_id);
+            if ($department) {
+                $department->delete();
+            } else {
+                throw new \Exception('Department not found.');
+            }
 
-            Department::destroy($request->department_id);
             DB::commit();
-            // Toastr::success('Department deleted successfully :)','Success');
-            return redirect()->back();
-    
-        } catch(\Exception $e) {
-            \Log::info($e);
+
+            Log::info('Department record deleted successfully', [
+                'department_id' => $request->department_id,
+            ]);
+
+            return redirect()->back()->with('success', 'Department record deleted successfully!');
+        } catch (\Exception $e) {
             DB::rollback();
-            // Toastr::error('Department deleted fail :)','Error');
-            return redirect()->back();
+            Log::error('Failed to delete Department record', [
+                'error' => $e->getMessage(),
+                'department_id' => $request->department_id,
+            ]);
+
+            return redirect()->back()->with('error', 'Failed to delete the department record. Please try again later.');
         }
     }
 }

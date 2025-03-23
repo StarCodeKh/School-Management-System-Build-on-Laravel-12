@@ -96,7 +96,7 @@
                                             <td>
                                                 <h2 class="table-avatar">
                                                     <a href="student-details.html"class="avatar avatar-sm me-2">
-                                                        <img class="avatar-img rounded-circle" src="{{ Storage::url('student-photos/'.$list->upload) }}" alt="">
+                                                        <img class="avatar-img rounded-circle" src="{{ asset($list->upload) }}" alt="">
                                                     </a>
                                                     <a href="student-details.html">{{ $list->first_name }} {{ $list->last_name }}</a>
                                                 </h2>

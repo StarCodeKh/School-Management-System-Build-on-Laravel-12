@@ -42,7 +42,7 @@
                                                 <div class="student-box flex-fill">
                                                     <div class="student-img">
                                                         <a href="{{ url('student/profile/'.$list->id) }}">
-                                                            <img class="img-fluid" alt="Students Info" src="{{ Storage::url('/student-photos/'.$list->upload) }}" width="20%" height="20%">
+                                                            <img class="img-fluid" alt="Students Info" src="{{ asset($list->upload) }}" width="20%" height="20%">
                                                         </a>
                                                     </div>
                                                     <div class="student-content pb-0">

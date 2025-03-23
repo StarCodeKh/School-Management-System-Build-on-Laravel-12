@@ -4,8 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\FeesType;
-use App\Models\User;
 use App\Models\FeesInformation;
+use App\Models\User;
+use Log;
 
 class AccountsController extends Controller
 {
@@ -26,9 +27,10 @@ class AccountsController extends Controller
         return view('accounts.add-fees-collection',compact('users','feesType'));
     }
 
-    /** save record */
+    /** Save Record */
     public function saveRecord(Request $request)
     {
+        // Validate the request
         $request->validate([
             'student_id'   => 'required|string',
             'student_name' => 'required|string',
@@ -39,7 +41,7 @@ class AccountsController extends Controller
         ]);
 
         try {
-
+            // Create new record
             $saveRecord = new FeesInformation;
             $saveRecord->student_id   = $request->student_id;
             $saveRecord->student_name = $request->student_name;
@@ -48,14 +50,20 @@ class AccountsController extends Controller
             $saveRecord->fees_amount  = $request->fees_amount;
             $saveRecord->paid_date    = $request->paid_date;
             $saveRecord->save();
-   
-            // Toastr::success('Has been add successfully :)','Success');
-            return redirect()->back();
-        } catch(\Exception $e) {
-            \Log::info($e);
-            DB::rollback();
-            // Toastr::error('fail, Add new record  :)','Error');
-            return redirect()->back();
+
+            // Log success message
+            Log::info('New fees record saved successfully', [
+                'student_id'   => $request->student_id,
+                'student_name' => $request->student_name,
+                'fees_type'    => $request->fees_type,
+            ]);
+            return redirect()->back()->with('success', 'Fees record saved successfully!');
+        } catch (\Exception $e) {
+            Log::error('Failed to save fees record', [
+                'error' => $e->getMessage(),
+                'request' => $request->all(),
+            ]);
+            return redirect()->back()->with('error', 'Failed to save fees record. Please try again.');
         }
     }
 }

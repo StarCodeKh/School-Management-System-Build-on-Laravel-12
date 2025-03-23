@@ -25,9 +25,6 @@
                                 <div class="row">
                                     <div class="col-12">
                                         <h5 class="form-title student-info">Student Information
-                                            <span>
-                                                <a href="javascript:;"><i class="feather-more-vertical"></i></a>
-                                            </span>
                                         </h5>
                                     </div>
                                     <div class="col-12 col-sm-4">

@@ -5,6 +5,17 @@ class Message {
         this.toastElement = this.createToast(toastId);
         this.toastContainer.appendChild(this.toastElement);
         this.toastInstance = new bootstrap.Toast(this.toastElement);
+
+        this.toastElement.addEventListener('mouseenter', () => {
+            this.isHovering = true;  // Mark that the mouse is hovering over the toast
+        });
+
+        this.toastElement.addEventListener('mouseleave', () => {
+            this.isHovering = false;  // Mark that the mouse is not hovering over the toast
+            if (this.autoHideTimeout) {
+                this.autoHideTimeout = setTimeout(() => this.hide(), this.timeout);
+            }
+        });
     }
 
     insertStyles() {
@@ -51,8 +62,11 @@ class Message {
     }
 
     show(message = "Message sent successfully!", type = "success", position = "top-right", timeout = 3000) {
+        // Set the position of the toast container
         this.toastContainer.className = `toast-container position-fixed p-3 ${this.getPositionClass(position)}`;
-
+        this.timeout = timeout;  // Store timeout for later use
+    
+        // Types object with styling for different toast types
         const types = {
             success: {
                 bg: 'bg-opacity-25 border-success border-opacity-75 rounded-2',
@@ -75,19 +89,41 @@ class Message {
                 weight: 'font-weight-bold'
             }
         };
-
-        const typeClass = types[type] || types.success;
-
+    
+        const typeClass = types[type] || types.success; // Default to success if type is invalid
+    
+        // Set the content of the toast
         this.toastBody.innerHTML = message;
         this.toastContent.className = `d-flex ${typeClass.bg}`;
-        this.toastBody.className = `toast-body ${typeClass.text} ${typeClass.weight}`; // Apply bold text here
+        this.toastBody.className = `toast-body ${typeClass.text} ${typeClass.weight}`; // Apply bold text
+    
+        // Add an icon depending on the toast type
         this.addIcon(type);
+    
+        // Show the toast
         this.toastInstance.show();
-
-        if (timeout) {
-            setTimeout(() => this.hide(), timeout);
+    
+        // Set a timeout to hide the toast unless the mouse is hovering over it
+        if (!this.isHovering && timeout) {
+            // Hide the toast after the specified timeout
+            this.autoHideTimeout = setTimeout(() => this.hide(), timeout);
         }
+    
+        // If the toast is hovered, cancel the timeout or reset the autoHideTimeout
+        this.toastElement.addEventListener('mouseenter', () => {
+            clearTimeout(this.autoHideTimeout); // Cancel auto-hide when hovered
+            this.isHovering = true;
+        });
+    
+        this.toastElement.addEventListener('mouseleave', () => {
+            this.isHovering = false;
+            if (timeout) {
+                // Set a new timeout to hide the toast after mouse leaves
+                this.autoHideTimeout = setTimeout(() => this.hide(), timeout);
+            }
+        });
     }
+    
 
     hide() {
         this.toastInstance.hide();

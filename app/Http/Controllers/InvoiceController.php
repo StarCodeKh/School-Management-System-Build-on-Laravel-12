@@ -2,16 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use DB;
-use App\Models\User;
-use App\Models\InvoiceDetails;
-use App\Models\InvoiceDiscount;
+use App\Models\InvoiceAdditionalCharges;
+use App\Models\InvoicePaymentDetails;
 use App\Models\InvoiceTotalAmount;
 use App\Models\InvoiceCustomerName;
-use App\Models\InvoicePaymentDetails;
-use App\Models\InvoiceAdditionalCharges;
-use Illuminate\Support\Facades\Storage;
+use App\Models\InvoiceDiscount;
+use App\Models\InvoiceDetails;
+use Illuminate\Http\Request;
+use App\Models\User;
+use File;
+use Log;
+use DB;
 
 class InvoiceController extends Controller
 {
@@ -122,11 +123,12 @@ class InvoiceController extends Controller
                 $InvoiceDetails->save();
             }
 
+            $upload_sign = null;
             if ($request->hasFile('upload_sign')) {
-                $file        = $request->file('upload_sign');
-                $upload_sign = $file->store('public/upload_sign','local'); // 'local' disk corresponds to the storage/app directory    
-            } else {
-                $upload_sign = 'NULL';
+                $file = $request->file('upload_sign');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $file->move(public_path('upload_sign'), $filename);
+                $upload_sign = 'upload_sign/' . $filename; // Path relative to public
             }
 
             /** InvoiceTotalAmount */
@@ -169,14 +171,15 @@ class InvoiceController extends Controller
             $InvoicePaymentDetails->add_notes                 = $request->add_notes;
             $InvoicePaymentDetails->save();
 
-            // Toastr::success('Has been add successfully :)','Success');
             DB::commit();
-            return redirect()->back();
+            return redirect()->back()->with('success', 'Invoice created successfully!');
         } catch(\Exception $e) {
             DB::rollback();
-            \Log::info($e);
-            // Toastr::error('fail, Add new student  :)','Error');
-            return redirect()->back();
+            Log::error('Invoice creation failed', [
+                'error' => $e->getMessage(),
+                'request' => $request->all(),
+            ]);
+            return redirect()->back()->with('error', 'Failed to create invoice. Please try again.');
         }
     }
 
@@ -201,7 +204,7 @@ class InvoiceController extends Controller
         return view('invoices.invoice_edit',compact('invoiceView','users','invoiceDetails','AdditionalCharges','InvoiceDiscount'));
     }
 
-    /** update record */
+    /** Update Record */
     public function updateRecord(Request $request)
     {
         try {
@@ -256,17 +259,17 @@ class InvoiceController extends Controller
             $InvoicePaymentDetails->add_notes                 = $request->add_notes;
             $InvoicePaymentDetails->save();
 
-            if(!empty($request->upload_sign)) {
-                $file = $request->upload_sign_unlink;
-                if (Storage::exists($file)) {
-                    unlink(Storage::path($file));
-                }
-            } 
+            $upload_sign = $request->upload_sign_unlink;
             if ($request->hasFile('upload_sign')) {
-                $file        = $request->file('upload_sign');
-                $upload_sign = $file->store('public/upload_sign','local'); // 'local' disk corresponds to the storage/app directory    
-            } else {
-                $upload_sign = $request->upload_sign_unlink;
+                // Delete old file if it exists
+                if (!empty($upload_sign) && File::exists(public_path($upload_sign))) {
+                    File::delete(public_path($upload_sign));
+                }
+                // Save new file in public folder
+                $file = $request->file('upload_sign');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $file->move(public_path('upload_sign'), $filename);
+                $upload_sign = 'upload_sign/' . $filename;
             }
             
             /** InvoiceTotalAmount */
@@ -277,42 +280,41 @@ class InvoiceController extends Controller
             $InvoiceTotalAmount->upload_sign             = $upload_sign;
             $InvoiceTotalAmount->name_of_the_signatuaory = $request->name_of_the_signatuaory;
             $InvoiceTotalAmount->save();
-
-            // Toastr::success('Has been updated successfully :)','Success');
-            return redirect()->back();
+            return redirect()->back()->with('success', 'Invoice updated successfully!');
         } catch(\Exception $e) {
-            \Log::info($e);
-            // Toastr::error('fail, update record  :)','Error');
-            return redirect()->back();
+            Log::error('Invoice update failed', [
+                'error' => $e->getMessage(),
+                'request' => $request->all(),
+            ]);
+            return redirect()->back()->with('error', 'Failed to update invoice. Please try again.');
         }
     }
 
-    /** delete record */
+    /** Delete Record */
     public function deleteRecord(Request $request)
     {
         DB::beginTransaction();
         try {
-            InvoiceCustomerName::where('invoice_id',$request->invoice_id)->delete();
-            InvoiceDetails::where('invoice_id',$request->invoice_id)->delete();
-            InvoiceTotalAmount::where('invoice_id',$request->invoice_id)->delete();
-            InvoiceAdditionalCharges::where('invoice_id',$request->invoice_id)->delete();
-            InvoiceDiscount::where('invoice_id',$request->invoice_id)->delete();
-            InvoicePaymentDetails::where('invoice_id',$request->invoice_id)->delete();
+            // Deleting records from various tables
+            InvoiceCustomerName::where('invoice_id', $request->invoice_id)->delete();
+            InvoiceDetails::where('invoice_id', $request->invoice_id)->delete();
+            InvoiceTotalAmount::where('invoice_id', $request->invoice_id)->delete();
+            InvoiceAdditionalCharges::where('invoice_id', $request->invoice_id)->delete();
+            InvoiceDiscount::where('invoice_id', $request->invoice_id)->delete();
+            InvoicePaymentDetails::where('invoice_id', $request->invoice_id)->delete();
 
             $file = $request->upload_sign;
-            if (Storage::exists($file)) {
-                unlink(Storage::path($file));
+            $filePath = public_path($file);
+        
+            if (file_exists($filePath)) {
+                unlink($filePath);
             }
-
             DB::commit();
-            Toastr::success('Record deleted successfully :)','Success');
-            return redirect()->route('invoice/list/page');
-        } catch(\Exception $e) {
+            return redirect()->route('invoice/list/page')->with('success', 'Record deleted successfully!');
+        } catch (\Exception $e) {
             DB::rollback();
-            Toastr::error('Record deleted fail :)','Error');
-            return redirect()->back();
+            return redirect()->back()->with('error', 'Failed to delete record. Please try again.');
         }
-
     }
 
     /** invoice view */

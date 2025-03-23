@@ -27,9 +27,6 @@
                                 <div class="row">
                                     <div class="col-12">
                                         <h5 class="form-title student-info">Student Information
-                                            <span>
-                                                <a href="javascript:;"><i class="feather-more-vertical"></i></a>
-                                            </span>
                                         </h5>
                                     </div>
                                     <div class="col-12 col-sm-4">
@@ -195,7 +192,7 @@
                                             <div class="uplod">
                                                 <h2 class="table-avatar">
                                                     <a class="avatar avatar-sm me-2">
-                                                        <img class="avatar-img rounded-circle" src="{{ Storage::url('student-photos/'.$studentEdit->upload) }}" alt="">
+                                                        <img class="avatar-img rounded-circle" src="{{ asset($studentEdit->upload) }}" alt="">
                                                     </a>
                                                 </h2>
                                                 <label class="file-upload image-upbtn mb-0 @error('upload') is-invalid @enderror">

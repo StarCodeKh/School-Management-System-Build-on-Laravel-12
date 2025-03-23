@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use DB;
 use App\Models\Subject;
+use Log;
+use DB;
 
 class SubjectController extends Controller
 {
@@ -21,9 +22,10 @@ class SubjectController extends Controller
         return view('subjects.subject_add');
     }
 
-    /** save record */
+    /** Save Record */
     public function saveRecord(Request $request)
     {
+        // Validate request input
         $request->validate([
             'subject_name' => 'required|string',
             'class'        => 'required|string',
@@ -31,20 +33,29 @@ class SubjectController extends Controller
         
         DB::beginTransaction();
         try {
-                $saveRecord = new Subject;
-                $saveRecord->subject_name   = $request->subject_name;
-                $saveRecord->class          = $request->class;
-                $saveRecord->save();
+            // Create a new Subject record
+            $saveRecord = new Subject;
+            $saveRecord->subject_name = $request->subject_name;
+            $saveRecord->class = $request->class;
+            $saveRecord->save();
 
-                // Toastr::success('Has been add successfully :)','Success');
-                DB::commit();
-            return redirect()->back();
-           
-        } catch(\Exception $e) {
-            \Log::info($e);
+            // Commit the transaction
+            DB::commit();
+
+            // Log success
+            Log::info('Subject record saved successfully', [
+                'subject_name' => $request->subject_name,
+                'class' => $request->class,
+            ]);
+            return redirect()->back()->with('success', 'Subject record saved successfully!');
+
+        } catch (\Exception $e) {
             DB::rollback();
-            Toastr::error('fail, Add new record:)','Error');
-            return redirect()->back();
+            Log::error('Failed to save Subject record', [
+                'error' => $e->getMessage(),
+                'request' => $request->all(),
+            ]);
+            return redirect()->back()->with('error', 'Failed to save Subject record: ' . $e->getMessage());
         }
     }
 
@@ -55,44 +66,71 @@ class SubjectController extends Controller
         return view('subjects.subject_edit',compact('subjectEdit'));
     }
 
-    /** update record */
+    /** Update Record */
     public function updateRecord(Request $request)
     {
         DB::beginTransaction();
         try {
-            
+            // Prepare update data
             $updateRecord = [
                 'subject_name' => $request->subject_name,
                 'class'        => $request->class,
             ];
-
-            Subject::where('subject_id',$request->subject_id)->update($updateRecord);
-            // Toastr::success('Has been update successfully :)','Success');
+    
+            // Update the Subject record
+            Subject::where('subject_id', $request->subject_id)->update($updateRecord);
+    
+            // Commit the transaction
             DB::commit();
-            return redirect()->back();
-           
-        } catch(\Exception $e) {
-            \Log::info($e);
+    
+            // Log success
+            Log::info('Subject record updated successfully', [
+                'subject_id'   => $request->subject_id,
+                'subject_name' => $request->subject_name,
+                'class'        => $request->class,
+            ]);
+            return redirect()->back()->with('success', 'Subject record updated successfully!');
+    
+        } catch (\Exception $e) {
             DB::rollback();
-            Toastr::error('Fail, update record:)','Error');
-            return redirect()->back();
+            Log::error('Failed to update Subject record', [
+                'error'   => $e->getMessage(),
+                'subject_id' => $request->subject_id,
+                'request' => $request->all(),
+            ]);
+            return redirect()->back()->with('error', 'Failed to update Subject record: ' . $e->getMessage());
         }
     }
 
-    /** delete record */
+    /** Delete Record */
     public function deleteRecord(Request $request)
     {
         DB::beginTransaction();
         try {
+            $subject = Subject::where('subject_id', $request->subject_id)->first();
+            if ($subject) {
+                Log::info('Subject record deleted', [
+                    'subject_id'   => $request->subject_id,
+                    'subject_name' => $subject->subject_name,
+                ]);
+                $subject->delete();
+                DB::commit();
+                return redirect()->back()->with('success', 'Subject record deleted successfully!');
+            } else {
+                Log::warning('Subject record not found for deletion', [
+                    'subject_id' => $request->subject_id,
+                ]);
 
-            Subject::where('subject_id',$request->subject_id)->delete();
-            DB::commit();
-            // Toastr::success('Deleted record successfully :)','Success');
-            return redirect()->back();
-        } catch(\Exception $e) {
+                return redirect()->back()->with('error', 'Subject record not found!');
+            }
+        } catch (\Exception $e) {
             DB::rollback();
-            // Toastr::error('Deleted record fail :)','Error');
-            return redirect()->back();
+            Log::error('Failed to delete Subject record', [
+                'error'   => $e->getMessage(),
+                'subject_id' => $request->subject_id,
+                'request' => $request->all(),
+            ]);
+            return redirect()->back()->with('error', 'Failed to delete Subject record: ' . $e->getMessage());
         }
     }
 

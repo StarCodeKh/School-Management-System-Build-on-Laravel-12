@@ -338,7 +338,7 @@
                                             <div class="form-group service-upload">
                                                 <span>Update Sign</span>
                                                 <input type="file" name="upload_sign" multiple>
-                                                <img class="img-fluid d-inline-block" src="{{ Storage::url($invoiceView->upload_sign) }}" alt="sign" style="width: 20%;">
+                                                <img class="img-fluid d-inline-block" src="{{ asset($invoiceView->upload_sign) }}" alt="sign" style="width: 20%;">
                                                 <input type="hidden" name="upload_sign_unlink" value="{{ $invoiceView->upload_sign }}">
                                             </div>
                                             <div class="form-group">

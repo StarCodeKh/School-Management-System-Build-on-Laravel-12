@@ -3,6 +3,9 @@
 /public/build
 /public/hot
 /public/storage
+/public/images
+/public/student-photos
+/public/upload_sign
 /storage/*.key
 /storage/pail
 /vendor
