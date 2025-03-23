@@ -29,7 +29,7 @@ class UserManagementController extends Controller
         return view('usermanagement.user_update',compact('users','role'));
     }
 
-    /** user Update */
+    /** User Update */
     public function userUpdate(Request $request)
     {
         DB::beginTransaction();
@@ -45,24 +45,26 @@ class UserManagementController extends Controller
                 $date_of_birth = $request->date_of_birth;
                 $department    = $request->department;
                 $status        = $request->status;
-
+    
                 $image_name = $request->hidden_avatar;
                 $image = $request->file('avatar');
-
-                if($image_name =='photo_defaults.jpg') {
+    
+                if($image_name == 'photo_defaults.jpg') {
                     if ($image != '') {
                         $image_name = rand() . '.' . $image->getClientOriginalExtension();
                         $image->move(public_path('/images/'), $image_name);
                     }
                 } else {
-                    
                     if($image != '') {
-                        unlink('images/'.$image_name);
+                        $oldImagePath = public_path('/images/') . $image_name;
+                        if (file_exists($oldImagePath)) {
+                            unlink($oldImagePath);
+                        }
                         $image_name = rand() . '.' . $image->getClientOriginalExtension();
                         $image->move(public_path('/images/'), $image_name);
                     }
                 }
-            
+    
                 $update = [
                     'user_id'       => $user_id,
                     'name'          => $name,
@@ -75,20 +77,31 @@ class UserManagementController extends Controller
                     'status'        => $status,
                     'avatar'        => $image_name,
                 ];
-
-                User::where('user_id',$request->user_id)->update($update);
+    
+                User::where('user_id', $request->user_id)->update($update);
             } else {
-                return redirect()->back()->with('error', 'User update fail :(');
+                Log::warning('Unauthorized user update attempt', [
+                    'user_id' => $request->user_id,
+                    'role'    => Session::get('role_name'),
+                ]);
+                return redirect()->back()->with('error', 'User update failed: Unauthorized access.');
             }
+    
             DB::commit();
             return redirect()->back()->with('success', 'User updated successfully :)');
-
-        } catch(\Exception $e){
+    
+        } catch (\Exception $e) {
             DB::rollback();
-            return redirect()->back()->with('error', 'User update fail :(');
+            Log::error('User update failed', [
+                'error'  => $e->getMessage(),
+                'user_id' => $request->user_id,
+                'request_data' => $request->except(['avatar']),
+            ]);
+    
+            return redirect()->back()->with('error', 'User update failed. Please try again.');
         }
     }
-
+    
     /** user delete */
     public function userDelete(Request $request)
     {
